@@ -12,6 +12,9 @@ namespace Application.Handlers.RequestHandlers.CommandHandlers
         {
             var todoItem = new TodoTask(request.Content, request.CreatedBy);
             _context.TodoTasks.Add(todoItem);
+
+            todoItem.AddTodoTaskEvent(todoItem);
+
             await _context.SaveChangesAsync(cancellationToken);
             return todoItem.Id;
         }

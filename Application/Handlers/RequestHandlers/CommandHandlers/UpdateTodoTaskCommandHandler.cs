@@ -22,13 +22,15 @@ namespace Application.Handlers.RequestHandlers.CommandHandlers
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException($"TodoTask with Id {request.Id} not found.");
 
-            todoItem.UpdateTodoTask(request.Content, request.IsCompleted);
+
+            todoItem.UpdateTodoTaskEvent(todoItem, request.Content, request.IsCompleted);
 
             _context.TodoTasks.Update(todoItem);
 
             try
             {
                 await _context.SaveChangesAsync(cancellationToken);
+
                 return TodoTaskMapper.TodoTaskToDto(todoItem);
             }
             catch (DbUpdateConcurrencyException)

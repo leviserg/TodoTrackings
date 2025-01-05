@@ -1,8 +1,11 @@
-﻿using Infrastructure.Persistence;
+﻿using Infrastructure.Messaging;
+using Infrastructure.Persistence;
 using MassTransit;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Infrastructure
 {
@@ -29,7 +32,7 @@ namespace Infrastructure
 
             services.AddMassTransit(x =>
             {
-
+                x.SetKebabCaseEndpointNameFormatter();
                 x.UsingRabbitMq((ctx, cfg) =>
                 {
                     // "/" - rabbitmq virtual host -> "/" by default (rabbitmq.conf)
@@ -38,11 +41,24 @@ namespace Infrastructure
                         cred.Username(Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? string.Empty);
                         cred.Password(Environment.GetEnvironmentVariable("RABBITMQ_USERPASS") ?? string.Empty);
                     });
+
+                    cfg.Message<TodoTaskChangedMessage>(configTopology =>
+                    {
+                        configTopology.SetEntityName("my-queue");
+                    });
+
                     cfg.ConfigureEndpoints(ctx);
+
+                    cfg.UseDelayedMessageScheduler();
+                    cfg.UseMessageRetry(r => r.Immediate(5)); // Retry 5 times before faulting
+
                 });
             });
 
             #endregion
+
+            
+
             return services;
         }
     }

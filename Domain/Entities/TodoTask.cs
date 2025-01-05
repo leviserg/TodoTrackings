@@ -19,20 +19,24 @@ namespace Domain.Entities
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
             IsCompleted = false;
-            AddDomainEvent(new TodoTaskCreated(Id, Content, CreatedBy));
         }
 
-        public void UpdateTodoTask(string content, bool isCompleted)
+        public void AddTodoTaskEvent(TodoTask TodoItem)
+        {
+            AddDomainEvent(new TodoTaskCreated(Guid.NewGuid(), TodoItem));
+        }
+
+        public void UpdateTodoTaskEvent(TodoTask TodoItem, string content, bool isCompleted)
         {
             Content = content;
-            UpdatedAt = DateTime.UtcNow;
             IsCompleted = isCompleted;
-            AddDomainEvent(new TodoTaskUpdated(Id, content, isCompleted));
+            UpdatedAt = DateTime.UtcNow;
+            AddDomainEvent(new TodoTaskUpdated(Guid.NewGuid(), TodoItem));
         }
 
-        public void DeleteTodoTask()
+        public void DeleteTodoTaskEvent(TodoTask TodoItem)
         {
-            AddDomainEvent(new TodoTaskDeleted(Id));
+            AddDomainEvent(new TodoTaskDeleted(Guid.NewGuid(), TodoItem));
         }
 
     }

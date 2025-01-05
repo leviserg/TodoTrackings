@@ -1,0 +1,41 @@
+name: entityframework-preparations
+services:
+    sqlexpress2022:
+        container_name: efsqlexpress
+        image: mcr.microsoft.com/mssql/server:2022-CU15-GDR1-ubuntu-22.04
+        ports:
+            - 1433:1433
+        volumes:
+            - efsqldata:/var/opt/mssql
+            - ./sqlscripts:/usr/src/app
+        hostname:
+            efsqlexpresshost
+        environment:
+            ACCEPT_EULA: Y
+            MSSQL_SA_PASSWORD: ${SERVER_PWD}
+            MSSQL_COLLATION: SQL_Latin1_General_CP1_CI_AS
+            MSSQL_PID: Express
+        command:
+            - /bin/bash
+            - -c
+            - |
+                /opt/mssql/bin/sqlservr & sleep 10;
+                /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SERVER_PWD}" -d master -q "CREATE LOGIN ${DEVELOPER_LOGIN} WITH PASSWORD = '${DEVELOPER_PWD}'" -C;
+                /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SERVER_PWD}" -d master -q "IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = '${DEVELOPER_DB}') BEGIN CREATE DATABASE [${DEVELOPER_DB}] COLLATE SQL_Latin1_General_CP1_CI_AS; END" -C;
+                /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "${SERVER_PWD}" -d master -q "IF EXISTS (SELECT 1 FROM master.sys.server_principals WHERE name = '${DEVELOPER_LOGIN}') BEGIN EXEC master..sp_addsrvrolemember @loginame = '${DEVELOPER_LOGIN}', @rolename = 'sysadmin'; END" -C;
+                wait
+                
+    rabbitmqlocal:
+        image: bitnami/rabbitmq:4.0.3
+        container_name: rabbitmqlocal
+        hostname: rabbitmqhost
+        # restart: always (optional - prod setup only)
+        environment:
+            - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_USERPASS}
+            - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 268435456 # 268435456 : 256 MB 2147483648 - bits : 2GB
+        ports:
+            - 15672:15672   # (Mgmt UI port)
+            - 5672:5672     # (AMQP)
+volumes:
+    efsqldata:

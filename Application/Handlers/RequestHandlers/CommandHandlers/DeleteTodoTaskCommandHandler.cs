@@ -17,9 +17,9 @@ namespace Application.Handlers.RequestHandlers.CommandHandlers
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException($"TodoTask with Id {request.Id} not found.");
 
-            todoItem.DeleteTodoTask();
-
             _context.TodoTasks.Remove(todoItem);
+
+            todoItem.DeleteTodoTaskEvent(todoItem);
 
             await _context.SaveChangesAsync(cancellationToken);
 
