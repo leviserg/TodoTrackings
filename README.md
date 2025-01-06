@@ -6,4 +6,5 @@
   <li>EntityFramework Core</li>
   <li>MediatR</li>
   <li>RabbitMQ + MassTransit</li>
+  <li>Minimal Api</li>
 </ul>
