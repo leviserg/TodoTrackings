@@ -6,23 +6,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Persistence
 {
     /* install packages :
-       Infrastructure project:
-        - Microsoft.EntityFrameworkCore;
-	    - Microsoft.EntityFrameworkCore.SqlServer;
-	    - Microsoft.EntityFrameworkCore.Design;
-    Presentation project:
-        - Microsoft.EntityFrameworkCore.Tools;
 
-    $ add migration > dotnet ef migrations add InitialMigration --project Infrastructure --startup-project Presentation
-    $ apply migr.   > dotnet ef database update --project Infrastructure --startup-project Presentation
-    $ drop db.      > dotnet ef database drop --project Infrastructure --startup-project Presentation
-    $ remove migr.  > dotnet ef migrations remove --project Infrastructure --startup-project Presentation
     */
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IMediator mediator) : DbContext(options), IApplicationDbContext
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IMediator mediator, DeletedEntity deletedEntity) : DbContext(options), IApplicationDbContext
     {
 
         private readonly IMediator _mediator = mediator;
-
+        private readonly DeletedEntity _deletedEntity = deletedEntity;
         public DbSet<TodoTask> TodoTasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,6 +30,13 @@ namespace Infrastructure.Persistence
                 entity.Property(e => e.CreatedBy)
                     .HasMaxLength(50)
                     .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetime")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetime");
             });
         }
 
@@ -71,6 +68,22 @@ namespace Infrastructure.Persistence
                     await _mediator.Publish(domainEvent);
                 }
             }
+
+            await DispatchDomainEventsForDeletedEntityAsync();
         }
+
+        private async Task DispatchDomainEventsForDeletedEntityAsync()
+        {
+            if (_deletedEntity.DomainEvents.Count == 0) return;
+            var deletedEvents = _deletedEntity.DomainEvents;
+
+            foreach (var deletedEvent in deletedEvents)
+            {
+                await _mediator.Publish(deletedEvent);
+            }
+
+            _deletedEntity.ClearDomainEvents();
+        }
+
     }
 }

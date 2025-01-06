@@ -7,13 +7,15 @@ using Infrastructure.Persistence;
 using MassTransit.Transports;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace Application.Handlers.RequestHandlers.CommandHandlers
 {
-    public class UpdateTodoTaskCommandHandler(IApplicationDbContext context) : IRequestHandler<UpdateTodoTaskCommand, TodoTaskDto>
+    public class UpdateTodoTaskCommandHandler(IApplicationDbContext context, ILogger<UpdateTodoTaskCommandHandler> logger) : IRequestHandler<UpdateTodoTaskCommand, TodoTaskDto>
     {
         private readonly IApplicationDbContext _context = context;
+        private readonly ILogger<UpdateTodoTaskCommandHandler> _logger = logger;
 
         public async Task<TodoTaskDto> Handle(UpdateTodoTaskCommand request, CancellationToken cancellationToken)
         {
@@ -33,16 +35,10 @@ namespace Application.Handlers.RequestHandlers.CommandHandlers
 
                 return TodoTaskMapper.TodoTaskToDto(todoItem);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException e)
             {
-                if (!(await _context.TodoTasks.AnyAsync(e => e.Id == request.Id, cancellationToken)))
-                {
-                    return new TodoTaskDto();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.LogError(e, "An error occurred while updating todo task with Id {TodoTaskId}: {Message}", todoItem.Id, e.Message);
+                throw new UpdateDbContextException($"Could not update TodoTask with Id {todoItem.Id}.");
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using Infrastructure.Messaging;
+﻿using Domain.Entities;
+using Infrastructure.Messaging;
 using Infrastructure.Persistence;
 using MassTransit;
 using MediatR;
@@ -25,6 +26,8 @@ namespace Infrastructure
             {
                 options.UseSqlServer(connectionString);
             });
+
+            services.AddScoped<DeletedEntity>();
 
             #endregion
 

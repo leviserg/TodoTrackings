@@ -3,8 +3,14 @@ using MediatR;
 
 namespace Domain.Entities
 {
-    public abstract class Entity : IHasDomainEvent
+    public class DeletedEntity : IHasDomainEvent
     {
+
+        public DeletedEntity()
+        {
+            
+        }
+
         private readonly List<INotification> _domainEvents = [];
         public IReadOnlyCollection<INotification> DomainEvents => _domainEvents.AsReadOnly();
         public void AddDomainEvent(INotification eventItem)

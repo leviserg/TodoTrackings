@@ -4,18 +4,21 @@ using Application.Queries;
 using Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Handlers.RequestHandlers.QueryHandlers
 {
-    public class GetTodoTasksQueryHandler(IApplicationDbContext context) : IRequestHandler<GetTodoTasksQuery, TodoTasksPaginated>
+    public class GetTodoTasksQueryHandler(IApplicationDbContext context, ILogger<GetTodoTasksQueryHandler> logger) : IRequestHandler<GetTodoTasksQuery, TodoTasksPaginated>
     {
 
         private readonly IApplicationDbContext _context = context;
+        private readonly ILogger<GetTodoTasksQueryHandler> _logger = logger;
         public async Task<TodoTasksPaginated> Handle(GetTodoTasksQuery request, CancellationToken cancellationToken)
         {
             try
             {
+                var (pageNumber, pageSize) = PaginationHelper.ValidatePagination(request.PageNumber, request.PageSize);
+
                 var query = _context.TodoTasks.AsQueryable();
 
                 if (!string.IsNullOrEmpty(request.SearchText))
@@ -35,20 +38,24 @@ namespace Application.Handlers.RequestHandlers.QueryHandlers
                         _ => query.OrderBy(t => t.IsCompleted).ThenByDescending(t => t.CreatedAt)
                     };
                 }
+                else
+                {
+                    query = query.OrderBy(t => t.IsCompleted).ThenByDescending(t => t.CreatedAt);
+                }
 
                 var totalCount = await query.CountAsync(cancellationToken);
 
                 var tasks = await query
-                    .Skip((request.PageNumber - 1) * request.PageSize)
-                    .Take(request.PageSize)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
                     .Select(t => TodoTaskMapper.TodoTaskToDto(t))
                     .ToListAsync(cancellationToken);
 
-                return new TodoTasksPaginated(tasks, totalCount, request.PageNumber, request.PageSize);
+                return new TodoTasksPaginated(tasks, totalCount, pageNumber, pageSize);
             }
             catch (Exception e)
             {
-                Debug.Write($"Error occured mwhen trying to retrieve todo tasks. {e.Message}");
+                _logger.LogError(e, "An error occurred while handling GetTodoTasksQuery: {Message}", e.Message);
                 return new TodoTasksPaginated([], 0, request.PageNumber, request.PageSize);
             }
 

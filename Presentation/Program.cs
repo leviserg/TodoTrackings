@@ -59,7 +59,7 @@ app.MapGet("/weatherforecast", () =>
 
 #region POST: createTodoTask
 
-app.MapPost("/tasks", async (CreateTodoTaskCommand command, IMediator mediator) =>
+app.MapPost("/tasks/new", async (CreateTodoTaskCommand command, IMediator mediator) =>
 {
     var id = await mediator.Send(command);
     return Results.Created($"/tasks/{id}", id);
@@ -75,7 +75,21 @@ app.MapGet("/tasks/{id:guid}", async (Guid id, IMediator mediator) =>
 {
     var task = await mediator.Send(new GetTodoTaskByIdQuery { Id = id });
     return task is null ? Results.NotFound() : Results.Ok(task);
-});
+})
+.WithName("GetTodoItemById")
+.WithOpenApi();
+
+#endregion
+
+#region POST: getTodoTasksPaginated
+
+app.MapPost("/tasks/all", async (GetTodoTasksQuery query, IMediator mediator) =>
+{
+    var result = await mediator.Send(query);
+    return Results.Ok(result);
+})
+.WithName("GetTodoItemsWithFilters")
+.WithOpenApi();
 
 #endregion
 
@@ -85,7 +99,9 @@ app.MapDelete("/tasks/{id:guid}", async (Guid id, IMediator mediator) =>
 {
     await mediator.Send(new DeleteTodoTaskCommand { Id = id });
     return Results.NoContent();
-});
+})
+.WithName("DeleteTodoItem")
+.WithOpenApi();
 
 #endregion
 
@@ -96,7 +112,9 @@ app.MapPut("/tasks/{id:guid}", async (Guid id, UpdateTodoTaskCommand command, IM
     if (id != command.Id) return Results.BadRequest();
     var updatedItem = await mediator.Send(command);
     return updatedItem is null ? Results.NotFound() : Results.Ok(updatedItem);
-});
+})
+.WithName("UpdateTodoItem")
+.WithOpenApi();
 
 #endregion
 

@@ -34,10 +34,5 @@ namespace Domain.Entities
             AddDomainEvent(new TodoTaskUpdated(Guid.NewGuid(), TodoItem));
         }
 
-        public void DeleteTodoTaskEvent(TodoTask TodoItem)
-        {
-            AddDomainEvent(new TodoTaskDeleted(Guid.NewGuid(), TodoItem));
-        }
-
     }
 }
