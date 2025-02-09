@@ -12,20 +12,23 @@ using System.Threading.Tasks;
 
 namespace Application.Handlers.RequestHandlers.CommandHandlers
 {
-    public class UpdateTodoTaskCommandHandler(IApplicationDbContext context, ILogger<UpdateTodoTaskCommandHandler> logger) : IRequestHandler<UpdateTodoTaskCommand, TodoTaskDto>
+    public class UpdateTodoTaskCommandHandler(IApplicationDbContext context, ILogger<UpdateTodoTaskCommandHandler> logger) : IRequestHandler<UpdateTodoTaskCommand, TodoTaskDto?>
     {
         private readonly IApplicationDbContext _context = context;
         private readonly ILogger<UpdateTodoTaskCommandHandler> _logger = logger;
 
-        public async Task<TodoTaskDto> Handle(UpdateTodoTaskCommand request, CancellationToken cancellationToken)
+        public async Task<TodoTaskDto?> Handle(UpdateTodoTaskCommand request, CancellationToken cancellationToken)
         {
             var todoItem = await _context.TodoTasks
                 .Where(t => t.Id == request.Id)
-                .FirstOrDefaultAsync(cancellationToken)
-                ?? throw new NotFoundException($"TodoTask with Id {request.Id} not found.");
+                .FirstOrDefaultAsync(cancellationToken);
 
+            if (todoItem == null)
+            {
+                return null;
+            }
 
-            todoItem.UpdateTodoTaskEvent(todoItem, request.Content, request.IsCompleted);
+            todoItem.UpdateTodoTaskEvent(todoItem, request.Content ?? todoItem.Content, request.IsCompleted);
 
             _context.TodoTasks.Update(todoItem);
 

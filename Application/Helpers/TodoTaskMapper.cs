@@ -5,8 +5,13 @@ namespace Application.Helpers
 {
     public static class TodoTaskMapper
     {
-        public static TodoTaskDto TodoTaskToDto(TodoTask todoTask)
+        public static TodoTaskDto? TodoTaskToDto(TodoTask? todoTask)
         {
+            if (todoTask == null)
+            {
+                return null;
+            }
+
             return new TodoTaskDto
             {
                 Id = todoTask.Id,
@@ -17,6 +22,5 @@ namespace Application.Helpers
                 UpdatedAt = todoTask.UpdatedAt
             };
         }
-
     }
 }

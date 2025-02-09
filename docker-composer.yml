@@ -1,3 +1,10 @@
+# docker-compose -f docker-composer.yml up
+# docker-compose -f docker-composer.yml down
+# docker-compose -f docker-composer.yml start
+# docker-compose -f docker-composer.yml stop
+# docker-compose -f docker-composer.yml build
+## /opt/bitnami/rabbitmq/etc/rabbitmq/rabbitmq.conf -> comment "## loopback_users.{yourdefaultuser} = true"
+
 name: entityframework-preparations
 services:
     sqlexpress2022:
