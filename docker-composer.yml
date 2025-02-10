@@ -3,7 +3,10 @@
 # docker-compose -f docker-composer.yml start
 # docker-compose -f docker-composer.yml stop
 # docker-compose -f docker-composer.yml build
-## /opt/bitnami/rabbitmq/etc/rabbitmq/rabbitmq.conf -> comment "## loopback_users.{yourdefaultuser} = true"
+# -------------------------------------------
+# rabbitmqctl add_user ${RABBITMQ_USERNAME} ${RABBITMQ_USERPASS};
+# rabbitmqctl set_user_tags ${RABBITMQ_USERNAME} administrator;
+# rabbitmqctl set_permissions -p / ${RABBITMQ_USERNAME} ".*" ".*" ".*";
 
 name: entityframework-preparations
 services:
@@ -38,8 +41,6 @@ services:
         hostname: rabbitmqhost
         # restart: always (optional - prod setup only)
         environment:
-            - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
-            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_USERPASS}
             - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 268435456 # 268435456 : 256 MB 2147483648 - bits : 2GB
         ports:
             - 15672:15672   # (Mgmt UI port)
